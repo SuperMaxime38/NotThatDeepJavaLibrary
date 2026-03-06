@@ -1,0 +1,64 @@
+
+
+// LAYER.JAVA
+public void setWeight(int i, int j, double value) {
+
+  weights.set(i, j, value);
+  
+}
+
+public void setBias(int i, double value) {
+
+  bias.set(i, 0, value);
+  
+}
+
+public double getWeight(int i, int j) {
+  return weights.get(i, j);
+}
+
+public double getBias(int i) {
+  return bias.get(i, 0);
+}
+
+// SET ATTRIBUTES PRIVATE IN LAYER & MODEL
+
+// MODEL.JAVA
+--> new fn
+
+/*
+before proper docstring:
+NN other -> the other parent to breed with
+double proportion --> (between 0 & 1) --> how many genes will be mutated
+double rate --> how much these genes should be changed (a low value pls)
+*/
+public NN breedAndMutate(NN other, double proportion, double rate) {
+  Random rand = new Random();
+  NN child = clone();
+
+  Layer l;
+  double mutation;
+  for(int layerIndex = 0; layerIndex < layers.size(); layerIndex++) {
+    l = layers.get(layerIndex);
+    for (int i = 0; i < l.getWeights().getNumRows(); i++) {
+        for (int j = 0; j < l.getWeights().getNumCols(); j++) {
+
+            // Which parent
+            if(rand.nextBool()) {
+              l.setWeight(i, j, other.getLayers().get(layerIndex).getWeight(i, j));
+              l.setBias(i, other.getLayers().get(layerIndex).getBias(i));
+            }
+
+            // Should we mutate
+            if(proportion >= rand.nextDouble()) {
+              mutation = rate * rand.nextGaussian();
+              l.setWeight(i, j, l.getWeight(i, j) + mutation);
+              mutation = rate * rand.nextGaussian();
+              l.setBias(i, l.getBias(i) + mutation);
+            }
+        }
+      }
+  }
+
+  return child;
+}
