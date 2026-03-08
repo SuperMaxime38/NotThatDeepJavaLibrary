@@ -11,9 +11,9 @@ public class Layer implements Serializable {
 	
 	private static final long serialVersionUID = 1L;
 	
-	SimpleMatrix weights;
-	SimpleMatrix bias;
-	ActivationFunction activ;
+	private SimpleMatrix weights;
+	private SimpleMatrix bias;
+	private ActivationFunction activ;
 	
 	// Pour stocker temporairement l’entrée (z) et la sortie (a)
     public SimpleMatrix lastZ, lastA;
@@ -23,20 +23,26 @@ public class Layer implements Serializable {
         weights = SimpleMatrix.random_DDRM(outputSize, inputSize, -1.0, 1.0, rand);
         bias = SimpleMatrix.random_DDRM(outputSize, 1, -1.0, 1.0, rand);
 		this.activ = fn;
+		//System.out.println("Layer : " + weights.toString() + "\n" + bias.toString());
 	}
 	
 	public SimpleMatrix forward(SimpleMatrix input) {
 	    SimpleMatrix z = weights.mult(input);
 
 	    // Broadcasting du biais
-	    SimpleMatrix biasMatrix = new SimpleMatrix(bias.getNumRows(), input.getNumCols());
-	    for (int i = 0; i < input.getNumCols(); i++) {
-	        biasMatrix.insertIntoThis(0, i, bias);
-	    }
+//	    SimpleMatrix biasMatrix = new SimpleMatrix(bias.getNumRows(), input.getNumCols());
+//	    for (int i = 0; i < input.getNumCols(); i++) {
+//	        biasMatrix.insertIntoThis(0, i, bias);
+//	    }
+	    SimpleMatrix ones = new SimpleMatrix(1, z.getNumCols());
+	    ones.fill(1.0);;
+	    
+	    SimpleMatrix biasMatrix = bias.mult(ones);
+	    //System.out.println("bias: " + bias.toString() + "\nbiasMatrix: " + biasMatrix.toString());
 
-	    z = z.plus(biasMatrix);
-
-	    this.lastZ = z;
+	    
+	    this.lastZ = z.plus(biasMatrix);
+	   // System.out.println("Output: " + this.lastZ.toString());
 	    
 	    applyActivationFunction();
 	    
@@ -100,6 +106,14 @@ public class Layer implements Serializable {
             bias.set(i, 0, bias.get(i, 0) + mutation);
         }
     }
+    
+    public double getWeight(int i, int j) {
+    	return this.weights.get(i, j);
+    }
+    
+    public double getBias(int i) {
+		return this.bias.get(i, 0);
+	}
 
 	
 	public SimpleMatrix getWeights() {
@@ -108,5 +122,29 @@ public class Layer implements Serializable {
 	
 	public SimpleMatrix getBias() {
 		return this.bias;
+	}
+	
+	public ActivationFunction getActiv() {
+		return this.activ;
+	}
+
+	public void setWeight(int i, int j, double value) {
+		weights.set(i, j, value);
+	}
+	
+	public void setBias(int i, double value) {
+		weights.set(i, 0, value);
+	}
+	
+	public void setWeights(SimpleMatrix weights) {
+		this.weights = weights;
+	}
+	
+	public void setBias(SimpleMatrix bias) {
+		this.bias = bias;
+	}
+	
+	public void setActiv(ActivationFunction activ) {
+		this.activ = activ;
 	}
 }

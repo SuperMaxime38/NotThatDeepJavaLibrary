@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.simple.SimpleMatrix;
@@ -14,7 +16,7 @@ import ntdjl.utils.ActivationFunction;
 import ntdjl.utils.Pair;
 
 public class NN {
-	ArrayList<Layer> layers;
+	private ArrayList<Layer> layers;
 	
 	public NN() {
 		layers = new ArrayList<Layer>();
@@ -95,6 +97,20 @@ public class NN {
 	    return (SimpleMatrix) result.getA(); // La sortie finale (yHat)
 	}
 	
+	public List<Float> predictList(SimpleMatrix input) {
+		Pair result = this.feed_forward(input);
+		SimpleMatrix output = (SimpleMatrix) result.getA();
+		
+		List<Float> predictions = new ArrayList<Float>();
+		
+		for (int i = 0; i < output.getNumElements(); i++) {
+			predictions.add((float) output.get(i));
+		}
+		
+		return predictions;
+		
+	}
+	
 	public int predictClass(SimpleMatrix input) {
 	    SimpleMatrix output = this.predict(input);
 	    
@@ -115,9 +131,9 @@ public class NN {
 	    try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(filename))) {
 	        out.writeInt(layers.size());
 	        for (Layer layer : layers) {
-	            out.writeObject(layer.activ); // enum
-	            out.writeObject(layer.weights.getDDRM());
-	            out.writeObject(layer.bias.getDDRM());
+	            out.writeObject(layer.getActiv()); // enum
+	            out.writeObject(layer.getWeights().getDDRM());
+	            out.writeObject(layer.getBias().getDDRM());
 	        }
 	    }
 	}
@@ -133,13 +149,79 @@ public class NN {
 	            DMatrixRMaj bias = (DMatrixRMaj) in.readObject();
 
 	            Layer layer = new Layer(0, 0, activ); // tailles dummy
-	            layer.weights = new SimpleMatrix(weights);
-	            layer.bias = new SimpleMatrix(bias);
-	            layer.activ = activ;
+	            layer.setWeights(new SimpleMatrix(weights));
+	            layer.setBias(new SimpleMatrix(bias));
+	            layer.setActiv(activ);
 
 	            layers.add(layer);
 	        }
 	    }
+	}
+	
+	/**
+	 * Permet de créer des enfants entre ce modèle et un autre et de les muter
+	 * 
+	 * @param other l'autre modèle parent
+	 * @param proportion la proportion de mutation (entre 0 et 1), plus elle est grande, plus il y aura de mutation
+	 * @param rate le taux de mutation (une valeur faible est préconisée)
+	 * @param amount le nombre d'enfants
+	 * @return une liste d'enfants mutés issues des 2 parents
+	 */
+	public List<NN> breedAndMutate(NN other, double proportion, double rate, int amount) {
+		Random rand = new Random();
+
+	    Layer l;
+	    double mutation;
+	    
+	    List<NN> children = new ArrayList<>();
+	    
+
+	    for(int a = 0; a < amount; a++) {
+	    	
+	    	// At the beginning the child will be a clone of the parent A
+		    NN child = clone();
+		    
+		    // For each layer of the child
+		    for(int layerIndex = 0; layerIndex < layers.size(); layerIndex++) {
+		    	l = layers.get(layerIndex);
+		    	
+		    	// For each weight of the layer
+		    	for (int i = 0; i < l.getWeights().getNumRows(); i++) {
+		    		for (int j = 0; j < l.getWeights().getNumCols(); j++) {
+	
+		    			/* 
+		    			 * Which parent
+		    			 * If nextBoolean is true -> This weight will be from parent B
+		    			 * That means that the child have a 50% chance to inherit a weight from the parent B
+		    			*/
+		    			if(rand.nextBoolean()) { 
+		    				
+		    				// If we copy the weight from B, we should also copy its bias
+		    				
+		    				l.setWeight(i, j, other.getLayers().get(layerIndex).getWeight(i, j));
+		    				l.setBias(i, other.getLayers().get(layerIndex).getBias(i));
+		    			}
+	
+		    			// Should we mutate
+		    			if(proportion >= rand.nextDouble()) {
+		    				
+		    				// Mutation using Gaussian distribution
+		    				// If we mutate the weight, we should also mutate its bias
+		    				
+		    				mutation = rate * rand.nextGaussian();
+		    				l.setWeight(i, j, l.getWeight(i, j) + mutation);
+		    				mutation = rate * rand.nextGaussian();
+		    				l.setBias(i, l.getBias(i) + mutation);
+		    			}
+		    		}
+		    	}
+		    }
+		    
+		    children.add(child);
+	    }
+	    
+	    return children;
+		
 	}
 	
 	public NN clone() {
@@ -150,6 +232,7 @@ public class NN {
 	    return copy;
 	}
 	
+	@Deprecated
 	public void mutate(double rate) {
 	    for (Layer layer : layers) {
 	        layer.mutate(rate);

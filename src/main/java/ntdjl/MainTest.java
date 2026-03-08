@@ -1,11 +1,8 @@
 package ntdjl;
 
-import java.io.IOException;
-
 import org.ejml.simple.SimpleMatrix;
 
 import ntdjl.utils.ActivationFunction;
-import ntdjl.utils.Pair;
 
 public class MainTest {
 	
@@ -15,20 +12,20 @@ public class MainTest {
 		
 		NN model = new NN();
 		
-		try {
-			model.load(filepath);
-			System.out.println("Model loaded");
-			System.out.println("Prediction: " + model.predict(new SimpleMatrix(new double[][] {{235, 69}}).transpose()));
-			
-			return;
-		} catch(IOException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//		try {
+//			model.load(filepath);
+//			System.out.println("Model loaded");
+//			System.out.println("Prediction: " + model.predictList(new SimpleMatrix(new double[][] {{235, 69}}).transpose()));
+//			
+//			return;
+//		} catch(IOException e) {
+//			e.printStackTrace();
+//		} catch (ClassNotFoundException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 		
-		int[] n = {2, 600, 100, 1};
+		int[] n = {2, 3, 3, 1};
 		
 		model.addLayer(new Layer(n[0], n[1], ActivationFunction.SIGMOID));
 		model.addLayer(new Layer(n[1], n[2], ActivationFunction.SIGMOID));
@@ -84,25 +81,27 @@ public class MainTest {
 		
 		Y.reshape(n[3], m);
 		
-		model.train(A0, Y, 1000, 0.1);
+		model.train(A0, Y, 10000, 0.1);
 		
-		double[][] test = {
-				{235, 69}
-		};
-		
-		SimpleMatrix testMat = new SimpleMatrix(test);
-		testMat = testMat.transpose();
-		
-		Pair out = model.feed_forward(testMat);
-		System.out.println("Final res: " + out.getA());
-		
-		
-		try {
-			model.save(filepath);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//		double[][] test = {
+//				{235, 69}
+//		};
+//		
+//		SimpleMatrix testMat = new SimpleMatrix(test);
+//		testMat = testMat.transpose();
+//		
+//		//Pair out = model.feed_forward(testMat);
+//		List<Float> res = model.predictList(testMat);
+//		System.out.println("Final res: " + res);
+//		System.out.println("In matrxi val: " + model.predict(testMat));
+//
+//		
+//		try {
+//			model.save(filepath);
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 		
 	}
 }
